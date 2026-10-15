@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Job | AI Resume Matcher{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <!-- Page heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Edit Job</h2>
+            <p class="text-secondary mb-0">
+                Update the details of your job listing.
+            </p>
+        </div>
+
+        <a href="/jobs/{{ job.id }}/details"
+           class="btn btn-outline-secondary">
+            Cancel
+        </a>
+    </div>
+
+    <!-- Edit form card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <!-- Display validation or database errors -->
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form action="/jobs/{{ job.id }}/edit" method="post">
+
+                <!-- Job title -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">
+                        Job Title
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="title"
+                        name="title"
+                        value="{{ form.get('title', job.title) }}"
+                        minlength="2"
+                        maxlength="200"
+                        required
+                    >
+                </div>
+
+                <!-- Company -->
+                <div class="mb-3">
+                    <label for="company" class="form-label">
+                        Company
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="company"
+                        name="company"
+                        value="{{ form.get('company', job.company) }}"
+                        minlength="2"
+                        maxlength="200"
+                        required
+                    >
+                </div>
+
+                <!-- Location -->
+                <div class="mb-3">
+                    <label for="location" class="form-label">
+                        Location
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="location"
+                        name="location"
+                        value="{{ form.get('location', job.location) }}"
+                        minlength="2"
+                        maxlength="200"
+                        required
+                    >
+                </div>
+
+                <!-- Employment type -->
+                <div class="mb-3">
+                    <label for="employment_type" class="form-label">
+                        Employment Type
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="employment_type"
+                        name="employment_type"
+                        required
+                    >
+                        {% for employment_type in [
+                            "Full-time",
+                            "Part-time",
+                            "Contract",
+                            "Internship",
+                            "Temporary"
+                        ] %}
+                            <option
+                                value="{{ employment_type }}"
+                                {% if form.get('employment_type', job.employment_type) == employment_type %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ employment_type }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Minimum experience -->
+                <div class="mb-3">
+                    <label for="experience_min" class="form-label">
+                        Minimum Experience (years)
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="experience_min"
+                        name="experience_min"
+                        min="0"
+                        value="{{ form.get('experience_min', job.experience_min if job.experience_min is not none else '') }}"
+                    >
+                </div>
+
+                <!-- Maximum experience -->
+                <div class="mb-3">
+                    <label for="experience_max" class="form-label">
+                        Maximum Experience (years)
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="experience_max"
+                        name="experience_max"
+                        min="0"
+                        value="{{ form.get('experience_max', job.experience_max if job.experience_max is not none else '') }}"
+                    >
+                </div>
+
+                <!-- Required skills -->
+                <div class="mb-3">
+                    <label for="required_skills" class="form-label">
+                        Required Skills
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="required_skills"
+                        name="required_skills"
+                        value="{{ form.get('required_skills', job.required_skills | join(', ')) }}"
+                        placeholder="Python, FastAPI, PostgreSQL"
+                        required
+                    >
+
+                    <div class="form-text">
+                        Separate skills with commas.
+                    </div>
+                </div>
+
+                <!-- Job description -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">
+                        Job Description
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="description"
+                        name="description"
+                        rows="6"
+                        minlength="20"
+                        required
+                    >{{ form.get('description', job.description) }}</textarea>
+                </div>
+
+                <!-- Form buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Save Changes
+                    </button>
+
+                    <a
+                        href="/jobs/{{ job.id }}/details"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

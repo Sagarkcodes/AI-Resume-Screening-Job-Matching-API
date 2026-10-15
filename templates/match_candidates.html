@@ -1,0 +1,986 @@
+
+{% extends "base.html" %}
+
+{% block title %}Candidate Matching | AI Resume Matcher{% endblock %}
+
+{% block content %}
+
+<style>
+    .matching-page {
+        --match-navy: #172b4d;
+        --match-blue: #2563eb;
+        --match-muted: #64748b;
+        color: #1e293b;
+    }
+
+    .matching-page .page-heading {
+        color: var(--match-navy);
+        font-weight: 750;
+        letter-spacing: -0.6px;
+    }
+
+    .matching-page .section-card {
+        border: 1px solid #e8edf4;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .matching-page .section-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--match-muted);
+        font-weight: 700;
+    }
+
+    .matching-page .summary-card {
+        height: 100%;
+        padding: 20px;
+        background: white;
+        border: 1px solid #e8edf4;
+        border-radius: 12px;
+    }
+
+    .matching-page .summary-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        background: #eff6ff;
+        color: var(--match-blue);
+        font-size: 1.25rem;
+    }
+
+    .matching-page .summary-value {
+        font-size: 1.8rem;
+        font-weight: 750;
+        color: var(--match-navy);
+        line-height: 1.3;
+    }
+
+    .matching-page .summary-caption {
+        color: var(--match-muted);
+        font-size: 0.88rem;
+    }
+
+    .matching-page .results-header {
+        background: linear-gradient(135deg, #172b4d, #234c80);
+        color: white;
+        border-radius: 13px 13px 0 0;
+        padding: 24px;
+    }
+
+    .matching-page .table > :not(caption) > * > * {
+        padding: 15px 12px;
+    }
+
+    .matching-page .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .matching-page .candidate-name {
+        color: #1e293b;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+    }
+
+    .matching-page .hybrid-score {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #1d4ed8;
+    }
+
+    .matching-page .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        height: 34px;
+        border-radius: 9px;
+        font-weight: 750;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .matching-page .top-rank {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .matching-page .skill-badge {
+        display: inline-block;
+        border-radius: 6px;
+        padding: 6px 9px;
+        margin: 3px 3px 3px 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .matching-page .matched-skill {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .matching-page .missing-skill {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .matching-page .candidate-details {
+        background: #f8fafc;
+        border: 1px solid #e8edf4;
+        border-radius: 10px;
+        padding: 17px;
+        margin: 5px 0 12px;
+    }
+
+    .matching-page .resume-item {
+        border-radius: 9px !important;
+        margin-bottom: 8px;
+        border: 1px solid #e2e8f0 !important;
+        transition: background-color 0.15s ease;
+    }
+
+    .matching-page .resume-item:hover {
+        background: #f8fafc;
+    }
+
+    .matching-page .resume-item:has(.resume-checkbox:checked) {
+        background: #eff6ff;
+        border-color: #93c5fd !important;
+    }
+
+    .matching-page .form-check-input {
+        flex-shrink: 0;
+    }
+
+    .matching-page .formula-note {
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .matching-page .empty-state {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 24px;
+    }
+
+    @media (max-width: 767px) {
+        .matching-page .results-header {
+            padding: 18px;
+        }
+
+        .matching-page .summary-value {
+            font-size: 1.5rem;
+        }
+
+        .matching-page .table > :not(caption) > * > * {
+            padding: 12px 9px;
+        }
+    }
+</style>
+
+<div class="container matching-page py-2">
+
+    <!-- Page heading -->
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-start gap-3 mb-4">
+
+        <div>
+            <a href="/dashboard"
+               class="text-decoration-none text-secondary small">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+
+            <h2 class="page-heading mt-3 mb-2">
+                Candidate Matching
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Compare candidate resumes against job requirements
+                and review ranked matching results.
+            </p>
+        </div>
+
+        <a href="/jobs/create" class="btn btn-outline-primary mt-3">
+            <i class="bi bi-plus-lg me-1"></i>
+            Create Job
+        </a>
+    </div>
+
+    <!-- Display matching errors when provided -->
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- Matching form -->
+    <form method="post" action="/matches/ui" id="matching-form">
+
+        <!-- Step 1: Job selection -->
+        <div class="card section-card mb-4">
+            <div class="card-body p-4">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="summary-icon">
+                        <i class="bi bi-briefcase"></i>
+                    </div>
+
+                    <div>
+                        <div class="section-label">Step 1</div>
+                        <h5 class="mb-0 fw-bold">Choose a job</h5>
+                    </div>
+                </div>
+
+                {% if jobs %}
+
+                    <label for="job_id" class="form-label fw-semibold">
+                        Job description
+                    </label>
+
+                    <select id="job_id"
+                            name="job_id"
+                            class="form-select form-select-lg"
+                            required>
+
+                        <option value="">Select a job to begin</option>
+
+                        {% for job in jobs %}
+                            <option
+                                value="{{ job.id }}"
+                                {% if selected_job_id is defined
+                                      and selected_job_id == job.id %}
+                                    selected
+                                {% endif %}>
+                                {{ job.title }} — {{ job.company }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+
+                    <div class="form-text">
+                        Only jobs belonging to your account are displayed.
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state text-center">
+                        <i class="bi bi-briefcase fs-2 text-secondary"></i>
+                        <h6 class="fw-bold mt-2">No jobs available</h6>
+                        <p class="text-secondary mb-3">
+                            Create a job description before matching resumes.
+                        </p>
+                        <a href="/jobs/create" class="btn btn-primary">
+                            Create Your First Job
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- Step 2: Resume selection -->
+        <div class="card section-card mb-4">
+            <div class="card-body p-4">
+
+                <div class="d-flex flex-wrap justify-content-between
+                            align-items-center gap-3 mb-3">
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="summary-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+
+                        <div>
+                            <div class="section-label">Step 2</div>
+                            <h5 class="mb-0 fw-bold">Choose candidate resumes</h5>
+                        </div>
+                    </div>
+
+                    <span class="badge text-bg-primary rounded-pill px-3 py-2">
+                        <i class="bi bi-files me-1"></i>
+                        Maximum {{ max_resumes }}
+                    </span>
+
+                </div>
+
+                <p class="text-secondary">
+                    Select up to {{ max_resumes }} resumes to compare with the chosen job.
+                </p>
+
+                {% if resumes %}
+
+                    <div class="row g-3 mb-3">
+
+                        <div class="col-lg-6">
+                            <label for="resume-search"
+                                   class="form-label fw-semibold">
+                                Search resumes
+                            </label>
+
+                            <div class="input-group">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="search"
+                                       id="resume-search"
+                                       class="form-control"
+                                       placeholder="Search by filename...">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 d-flex align-items-end gap-2">
+                            <button type="button"
+                                    id="select-all"
+                                    class="btn btn-outline-primary">
+                                <i class="bi bi-check2-all me-1"></i>
+                                Select Visible
+                            </button>
+
+                            <button type="button"
+                                    id="clear-selection"
+                                    class="btn btn-outline-secondary">
+                                Clear Selection
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="d-flex justify-content-between
+                                align-items-center mb-2">
+                        <span class="small text-secondary">
+                            Your uploaded resumes
+                        </span>
+                        <span class="small fw-semibold">
+                            <span id="selected-count">0</span> / {{ max_resumes }} selected
+                        </span>
+                    </div>
+
+                    <div class="progress mb-3" style="height: 5px;">
+                        <div id="selection-progress"
+                             class="progress-bar"
+                             role="progressbar"
+                             style="width: 0%;"
+                             aria-valuemin="0"
+                             aria-valuemax="{{ max_resumes }}"
+                             aria-valuenow="0">
+                        </div>
+                    </div>
+
+                    <div id="resume-list">
+
+                        {% for resume in resumes %}
+
+                            <div class="resume-item d-flex flex-wrap
+                                        align-items-center gap-3 p-3"
+                                 data-filename="{{ resume.original_filename | lower }}">
+
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input resume-checkbox"
+                                    name="resume_ids"
+                                    value="{{ resume.id }}"
+                                    id="resume_{{ resume.id }}"
+                                    {% if selected_resume_ids is defined
+                                          and resume.id in selected_resume_ids %}
+                                        checked
+                                    {% endif %}>
+
+                                <label for="resume_{{ resume.id }}"
+                                       class="flex-grow-1 mb-0"
+                                       style="min-width: 160px; cursor: pointer;">
+
+                                    <span class="d-block candidate-name">
+                                        {{ resume.original_filename }}
+                                    </span>
+
+                                    <small class="text-secondary">
+                                        Resume ID: {{ resume.id }}
+                                    </small>
+                                </label>
+
+                                <a href="/resumes/{{ resume.id }}/view"
+                                   class="btn btn-sm btn-outline-primary"
+                                   target="_blank"
+                                   rel="noopener">
+                                    <i class="bi bi-eye me-1"></i>
+                                    View PDF
+                                </a>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <div id="selection-warning"
+                         class="alert alert-warning mt-3 d-none"
+                         role="status">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Maximum of {{ max_resumes }} resumes reached.
+                        Unselect a resume to choose another.
+                    </div>
+
+                    <div id="no-search-results"
+                         class="alert alert-info mt-3 d-none"
+                         role="status">
+                        No resumes match your search.
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state text-center">
+                        <i class="bi bi-file-earmark-pdf fs-2 text-secondary"></i>
+                        <h6 class="fw-bold mt-2">No resumes uploaded</h6>
+                        <p class="text-secondary mb-3">
+                            Upload candidate PDFs before running matching.
+                        </p>
+                        <a href="/resumes/manage" class="btn btn-primary">
+                            Upload Resumes
+                        </a>
+                    </div>
+
+                {% endif %}
+
+                <div class="formula-note mt-4">
+                    <div class="d-flex gap-2 align-items-start">
+                        <i class="bi bi-info-circle text-primary fs-5"></i>
+                        <div>
+                            <div class="fw-semibold mb-1">
+                                How matching scores are calculated
+                            </div>
+                            <div class="small text-secondary">
+                                Hybrid Score = 70% Skill Match +
+                                30% Semantic Score. These scores help with
+                                screening and should be considered alongside
+                                the candidate's actual resume.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center
+                            justify-content-between gap-3 mt-4">
+
+                    <small class="text-secondary">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Only your jobs and resumes are available here.
+                    </small>
+
+                    <button type="submit"
+                            id="run-matching"
+                            class="btn btn-primary btn-lg px-4"
+                            {% if not jobs or not resumes %}disabled{% endif %}>
+
+                        <i class="bi bi-cpu me-2"></i>
+                        Run Matching
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+    </form>
+
+    <!-- Ranked results -->
+    {% if results is defined %}
+
+        {% set score_stats = namespace(total=0, top=0) %}
+
+        {% for result in results %}
+            {% set score_stats.total = score_stats.total + result.hybrid_score %}
+        {% endfor %}
+
+        {% if results %}
+            {% set score_stats.top = results[0].hybrid_score %}
+        {% endif %}
+
+        <div class="card section-card mb-4">
+
+            <div class="results-header">
+                <div class="d-flex flex-wrap justify-content-between
+                            align-items-start gap-3">
+
+                    <div>
+                        <div class="section-label text-white-50 mb-2">
+                            Screening Summary
+                        </div>
+                        <h3 class="fw-bold mb-2">Matching Results</h3>
+                        <p class="mb-0 text-white-50">
+                            Review candidate rankings and matching evidence.
+                        </p>
+                    </div>
+
+                    <span class="badge bg-light text-primary px-3 py-2">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Matching complete
+                    </span>
+
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="summary-card">
+                            <div class="d-flex justify-content-between
+                                        align-items-center mb-3">
+                                <span class="summary-caption">
+                                    Candidates screened
+                                </span>
+                                <span class="summary-icon">
+                                    <i class="bi bi-people"></i>
+                                </span>
+                            </div>
+
+                            <div class="summary-value">
+                                {{ screened_count }}
+                            </div>
+
+                            <div class="summary-caption">
+                                Candidates in this screening run
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="summary-card">
+                            <div class="d-flex justify-content-between
+                                        align-items-center mb-3">
+                                <span class="summary-caption">
+                                    Highest hybrid score
+                                </span>
+                                <span class="summary-icon">
+                                    <i class="bi bi-trophy"></i>
+                                </span>
+                            </div>
+
+                            <div class="summary-value">
+                                {% if results %}
+                                    {{ "%.2f"|format(score_stats.top) }}%
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+
+                            <div class="summary-caption">
+                                Highest score among screened candidates
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="summary-card">
+                            <div class="d-flex justify-content-between
+                                        align-items-center mb-3">
+                                <span class="summary-caption">
+                                    Average hybrid score
+                                </span>
+                                <span class="summary-icon">
+                                    <i class="bi bi-bar-chart"></i>
+                                </span>
+                            </div>
+
+                            <div class="summary-value">
+                                {% if results %}
+                                    {{ "%.2f"|format(score_stats.total / results|length) }}%
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+
+                            <div class="summary-caption">
+                                Average across this screening run
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {% if results %}
+
+                    <div class="d-flex flex-wrap justify-content-between
+                                align-items-center gap-2 mb-3">
+
+                        <div>
+                            <h5 class="fw-bold mb-1">Candidate Rankings</h5>
+                            <p class="text-secondary small mb-0">
+                                Candidates are ordered by hybrid score,
+                                with your existing tie-break rules.
+                            </p>
+                        </div>
+
+                        <span class="text-secondary small">
+                            {{ results|length }} result(s)
+                        </span>
+
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">Rank</th>
+                                    <th scope="col">Candidate</th>
+                                    <th scope="col">Hybrid Score</th>
+                                    <th scope="col">Skill Match</th>
+                                    <th scope="col">Semantic</th>
+                                    <th scope="col">Resume</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for result in results %}
+
+                                    {% set candidate = resume_lookup.get(result.resume_id) %}
+
+                                    <tr>
+                                        <td>
+                                            <span class="rank-badge
+                                                {% if loop.index == 1 %}top-rank{% endif %}">
+                                                {% if loop.index == 1 %}
+                                                    <i class="bi bi-trophy-fill me-1"></i>
+                                                {% endif %}
+                                                #{{ loop.index }}
+                                            </span>
+                                        </td>
+
+                                        <td style="min-width: 210px;">
+                                            {% if candidate %}
+                                                <div class="candidate-name">
+                                                    {{ candidate.original_filename }}
+                                                </div>
+                                                <small class="text-secondary">
+                                                    Resume ID: {{ result.resume_id }}
+                                                </small>
+                                            {% else %}
+                                                <div class="candidate-name">
+                                                    Resume #{{ result.resume_id }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <span class="hybrid-score">
+                                                {{ "%.2f"|format(result.hybrid_score) }}%
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold">
+                                                {{ "%.2f"|format(result.match_score) }}%
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold">
+                                                {{ "%.2f"|format(result.semantic_score) }}%
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            {% if candidate %}
+                                                <a href="/resumes/{{ candidate.id }}/view"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   target="_blank"
+                                                   rel="noopener">
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    View
+                                                </a>
+                                            {% else %}
+                                                <span class="text-secondary">Unavailable</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="6" class="pt-0">
+                                            <details>
+                                                <summary class="small fw-semibold
+                                                                text-primary py-2"
+                                                         style="cursor: pointer;">
+                                                    <i class="bi bi-list-check me-1"></i>
+                                                    Explain this candidate's match
+                                                </summary>
+
+                                                <div class="candidate-details">
+
+                                                    <div class="row g-4">
+
+                                                        <div class="col-md-6">
+                                                            <div class="fw-bold mb-2">
+                                                                <i class="bi bi-check-circle-fill
+                                                                          text-success me-1"></i>
+                                                                Matched Skills
+                                                            </div>
+
+                                                            {% if result.matched_skills %}
+                                                                {% for skill in result.matched_skills %}
+                                                                    <span class="skill-badge matched-skill">
+                                                                        {{ skill }}
+                                                                    </span>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <p class="text-secondary small mb-0">
+                                                                    No matched skills recorded.
+                                                                </p>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="fw-bold mb-2">
+                                                                <i class="bi bi-exclamation-circle-fill
+                                                                          text-warning me-1"></i>
+                                                                Missing Skills
+                                                            </div>
+
+                                                            {% if result.missing_skills %}
+                                                                {% for skill in result.missing_skills %}
+                                                                    <span class="skill-badge missing-skill">
+                                                                        {{ skill }}
+                                                                    </span>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <p class="text-secondary small mb-0">
+                                                                    No missing skills recorded.
+                                                                </p>
+                                                            {% endif %}
+                                                        </div>
+
+                                                    </div>
+
+                                                    <hr>
+
+                                                    <p class="small text-secondary mb-0">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        A higher score indicates stronger alignment
+                                                        under the configured matching formula.
+                                                        Review the original resume before making
+                                                        a hiring decision.
+                                                    </p>
+
+                                                </div>
+                                            </details>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state text-center">
+                        <i class="bi bi-search fs-2 text-secondary"></i>
+                        <h6 class="fw-bold mt-2">No matching results</h6>
+                        <p class="text-secondary mb-0">
+                            No results were returned for this screening run.
+                        </p>
+                    </div>
+
+                {% endif %}
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a href="/dashboard" class="btn btn-outline-secondary">
+                        <i class="bi bi-house me-1"></i>
+                        Dashboard
+                    </a>
+
+                    <a href="#matching-form" class="btn btn-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Run Another Match
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    // Read the maximum from the setting passed by FastAPI.
+    const MAX_RESUMES = {{ max_resumes | tojson }};
+
+    const resumeCheckboxes = Array.from(
+        document.querySelectorAll(".resume-checkbox")
+    );
+
+    const resumeItems = Array.from(
+        document.querySelectorAll(".resume-item")
+    );
+
+    const searchInput = document.getElementById("resume-search");
+    const selectedCount = document.getElementById("selected-count");
+    const selectionWarning = document.getElementById("selection-warning");
+    const noSearchResults = document.getElementById("no-search-results");
+    const selectionProgress = document.getElementById("selection-progress");
+
+    const selectAllButton = document.getElementById("select-all");
+    const clearSelectionButton = document.getElementById("clear-selection");
+
+    const matchingForm = document.getElementById("matching-form");
+    const runMatchingButton = document.getElementById("run-matching");
+
+    function updateResumeSelection() {
+        const selected = resumeCheckboxes.filter(
+            checkbox => checkbox.checked
+        );
+
+        const count = selected.length;
+
+        if (selectedCount) {
+            selectedCount.textContent = count;
+        }
+
+        if (selectionProgress) {
+            const percentage = Math.min(
+                (count / MAX_RESUMES) * 100,
+                100
+            );
+
+            selectionProgress.style.width = `${percentage}%`;
+            selectionProgress.setAttribute("aria-valuenow", count);
+        }
+
+        // Prevent selecting more resumes than the configured maximum.
+        resumeCheckboxes.forEach(checkbox => {
+            checkbox.disabled = !checkbox.checked && count >= MAX_RESUMES;
+        });
+
+        if (selectionWarning) {
+            selectionWarning.classList.toggle(
+                "d-none",
+                count < MAX_RESUMES
+            );
+        }
+    }
+
+    function filterResumes() {
+        if (!searchInput) {
+            return;
+        }
+
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        resumeItems.forEach(item => {
+            const filename = item.dataset.filename || "";
+            const matches = filename.includes(searchTerm);
+
+            item.classList.toggle("d-none", !matches);
+
+            if (matches) {
+                visibleCount++;
+            }
+        });
+
+        if (noSearchResults) {
+            noSearchResults.classList.toggle(
+                "d-none",
+                visibleCount > 0
+            );
+        }
+    }
+
+    if (selectAllButton) {
+        selectAllButton.addEventListener("click", () => {
+            const visibleCheckboxes = resumeItems
+                .filter(item => !item.classList.contains("d-none"))
+                .map(item => item.querySelector(".resume-checkbox"));
+
+            let selectedNow = resumeCheckboxes.filter(
+                checkbox => checkbox.checked
+            ).length;
+
+            visibleCheckboxes.forEach(checkbox => {
+                if (
+                    !checkbox.checked &&
+                    selectedNow < MAX_RESUMES
+                ) {
+                    checkbox.checked = true;
+                    selectedNow++;
+                }
+            });
+
+            updateResumeSelection();
+        });
+    }
+
+    if (clearSelectionButton) {
+        clearSelectionButton.addEventListener("click", () => {
+            resumeCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            updateResumeSelection();
+        });
+    }
+
+    resumeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", updateResumeSelection);
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterResumes);
+    }
+
+    if (matchingForm) {
+        matchingForm.addEventListener("submit", event => {
+            const selectedNow = resumeCheckboxes.filter(
+                checkbox => checkbox.checked
+            ).length;
+
+            const jobSelect = document.getElementById("job_id");
+
+            if (!jobSelect || !jobSelect.value) {
+                event.preventDefault();
+                alert("Please select a job.");
+                return;
+            }
+
+            if (selectedNow < 1 || selectedNow > MAX_RESUMES) {
+                event.preventDefault();
+                alert(
+                    `Please select between 1 and ${MAX_RESUMES} resumes.`
+                );
+                return;
+            }
+
+            if (runMatchingButton) {
+                runMatchingButton.disabled = true;
+                runMatchingButton.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2"></span>' +
+                    'Running Matching...';
+            }
+        });
+    }
+
+    updateResumeSelection();
+    filterResumes();
+</script>
+
+{% endblock %}

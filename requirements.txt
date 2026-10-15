@@ -1,0 +1,34 @@
+
+# API framework and server
+fastapi
+uvicorn[standard]
+
+# Configuration and validation
+pydantic
+pydantic-settings
+email-validator
+python-dotenv
+
+# Database and migrations
+sqlalchemy
+psycopg[binary]
+alembic
+
+# Authentication and password hashing
+PyJWT
+pwdlib[argon2]
+
+# Resume PDF processing
+pypdf
+python-multipart
+
+# Semantic resume matching
+sentence-transformers
+
+# Recruiter frontend
+jinja2
+
+# Testing
+pytest
+httpx
+reportlab

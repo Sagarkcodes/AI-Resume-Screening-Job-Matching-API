@@ -1,0 +1,12 @@
+body {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+main {
+    min-height: 85vh;
+}

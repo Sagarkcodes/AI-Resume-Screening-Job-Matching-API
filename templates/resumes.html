@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Resumes | AI Resume Matcher{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Page heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Manage Resumes</h2>
+            <p class="text-secondary mb-0">
+                Upload and manage candidate resumes.
+            </p>
+        </div>
+
+        <a href="/dashboard" class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Success message -->
+    {% if message %}
+    <div class="alert alert-success" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Error message -->
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Upload form -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="card-title mb-2">
+                <i class="bi bi-cloud-arrow-up me-2"></i>
+                Upload Candidate Resumes
+            </h5>
+
+            <p class="text-secondary">
+                Select one or more PDF files to upload.
+            </p>
+
+            <form
+                action="/resumes/manage"
+                method="post"
+                enctype="multipart/form-data"
+            >
+                <div class="mb-3">
+                    <label for="files" class="form-label">
+                        Choose PDF files
+                    </label>
+
+                    <input
+                        type="file"
+                        class="form-control"
+                        id="files"
+                        name="files"
+                        accept=".pdf,application/pdf"
+                        multiple
+                        required
+                    >
+
+                    <div class="form-text">
+                        Maximum 10 files per upload.
+                        Each file must be 5 MB or smaller.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Resumes
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Upload results -->
+    {% if results %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="card-title mb-3">Upload Results</h5>
+
+            <div class="alert alert-info">
+                {{ successful_uploads }} uploaded successfully.
+                {{ failed_uploads }} failed.
+            </div>
+
+            <ul class="list-group">
+                {% for result in results %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="text-break">
+                            {{ result.filename }}
+                        </span>
+
+                        {% if result.status == "success" %}
+                        <span class="badge text-bg-success">
+                            Success
+                        </span>
+                        {% else %}
+                        <span class="badge text-bg-danger">
+                            Failed
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if result.status == "failed" %}
+                    <small class="text-danger">
+                        {{ result.detail }}
+                    </small>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Uploaded resumes -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <h5 class="card-title mb-3">Uploaded Resumes</h5>
+
+            {% if resumes %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Resume Filename</th>
+                            <th>File Size</th>
+                            <th>Extracted Characters</th>
+                            <th>Upload Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for resume in resumes %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                {{ resume.original_filename }}
+                            </td>
+
+                            <td>
+                                {{ (resume.file_size_bytes / 1024) | round(1) }} KB
+                            </td>
+
+                            <td>
+                                {{ resume.extracted_text | length }}
+                            </td>
+
+                            <td>
+                                {{ resume.created_at.strftime("%d %b %Y, %I:%M %p") }}
+                            </td>
+
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+
+                                    <!-- View PDF -->
+                                    <a
+                                        href="/resumes/{{ resume.id }}/view"
+                                        class="btn btn-outline-primary btn-sm"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="bi bi-eye me-1"></i>
+                                        View
+                                    </a>
+
+                                    <!-- Download PDF -->
+                                    <a
+                                        href="/resumes/{{ resume.id }}/download"
+                                        class="btn btn-outline-secondary btn-sm"
+                                    >
+                                        <i class="bi bi-download me-1"></i>
+                                        Download
+                                    </a>
+
+                                    <!-- Delete PDF -->
+                                    <form
+                                        action="/resumes/{{ resume.id }}/delete"
+                                        method="post"
+                                        onsubmit="return confirm('Are you sure you want to permanently delete this resume?');"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="btn btn-outline-danger btn-sm"
+                                        >
+                                            <i class="bi bi-trash me-1"></i>
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-file-earmark-pdf display-4 text-secondary"></i>
+                <h5 class="mt-3">No resumes uploaded yet</h5>
+                <p class="text-secondary mb-0">
+                    Uploaded candidate PDF resumes will appear here.
+                </p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

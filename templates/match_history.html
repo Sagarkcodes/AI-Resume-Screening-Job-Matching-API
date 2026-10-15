@@ -1,0 +1,600 @@
+
+{% extends "base.html" %}
+
+{% block title %}Match History | AI Resume Matcher{% endblock %}
+
+{% block content %}
+
+<style>
+    .history-page {
+        color: #1e293b;
+    }
+
+    .history-page .page-title {
+        color: #172b4d;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+    }
+
+    .history-page .history-card,
+    .history-page .stat-card {
+        background: #fff;
+        border: 1px solid #e8edf4;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .history-page .stat-card {
+        padding: 20px;
+        height: 100%;
+    }
+
+    .history-page .stat-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 1.25rem;
+    }
+
+    .history-page .stat-number {
+        color: #172b4d;
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .history-page .muted {
+        color: #64748b;
+    }
+
+    .history-page .history-table th {
+        background: #f8fafc;
+        color: #475569;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .history-page .history-table th,
+    .history-page .history-table td {
+        padding: 14px 12px;
+        vertical-align: middle;
+    }
+
+    .history-page .score {
+        font-weight: 800;
+        color: #1d4ed8;
+    }
+
+    .history-page .skill-badge {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 6px;
+        margin: 3px 3px 3px 0;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .history-page .matched {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .history-page .missing {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .history-page .details-panel {
+        background: #f8fafc;
+        border: 1px solid #e8edf4;
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .history-page .job-heading {
+        color: #172b4d;
+        font-weight: 750;
+    }
+
+    .history-page .top-candidate {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .history-page .rank-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 800;
+    }
+
+    .history-page .empty-state {
+        padding: 45px 20px;
+        text-align: center;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+    }
+
+    @media (max-width: 576px) {
+        .history-page .history-table th,
+        .history-page .history-table td {
+            padding: 12px 9px;
+        }
+    }
+</style>
+
+<div class="container history-page py-2">
+
+    <!-- Page heading -->
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-start gap-3 mb-4">
+
+        <div>
+            <a href="/dashboard"
+               class="text-decoration-none muted small">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+
+            <h1 class="h2 page-title mt-3 mb-2">
+                Match History & Leaderboards
+            </h1>
+
+            <p class="muted mb-0">
+                Compare candidates across previous screenings for each job.
+            </p>
+        </div>
+
+        <a href="/matches/ui" class="btn btn-primary mt-3">
+            <i class="bi bi-stars me-2"></i>
+            Match Candidates
+        </a>
+
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+                    <span class="muted small">Saved match records</span>
+                    <span class="stat-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </span>
+                </div>
+
+                <div class="stat-number">{{ matches|length }}</div>
+
+                <div class="muted small">
+                    All saved candidate screening results
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+                    <span class="muted small">Jobs screened</span>
+                    <span class="stat-icon">
+                        <i class="bi bi-briefcase"></i>
+                    </span>
+                </div>
+
+                <div class="stat-number">{{ job_groups|length }}</div>
+
+                <div class="muted small">
+                    Jobs with saved matching results
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+                    <span class="muted small">Unique candidates</span>
+                    <span class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </span>
+                </div>
+
+                {% set total_candidates = namespace(count=0) %}
+                {% for group in job_groups %}
+                    {% set total_candidates.count =
+                        total_candidates.count + group.candidate_count %}
+                {% endfor %}
+
+                <div class="stat-number">
+                    {{ total_candidates.count }}
+                </div>
+
+                <div class="muted small">
+                    Distinct resumes across job leaderboards
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+                    <span class="muted small">Scoring method</span>
+                    <span class="stat-icon">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </span>
+                </div>
+
+                <div class="fw-bold fs-5">70% + 30%</div>
+
+                <div class="muted small">
+                    Skill match + semantic score
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Job-wise leaderboards -->
+    {% if job_groups %}
+
+        {% for group in job_groups %}
+
+            <div class="history-card mb-4">
+
+                <!-- Job heading -->
+                <div class="p-4 border-bottom">
+                    <div class="d-flex flex-wrap justify-content-between
+                                align-items-start gap-3">
+
+                        <div>
+                            <div class="text-uppercase muted small fw-bold mb-2">
+                                Job leaderboard
+                            </div>
+
+                            <h2 class="h5 job-heading mb-1">
+                                {% if group.job %}
+                                    {{ group.job.title }}
+                                {% else %}
+                                    Job #{{ group.matches[0].job_id }}
+                                {% endif %}
+                            </h2>
+
+                            {% if group.job %}
+                                <div class="muted small">
+                                    {{ group.job.company }}
+                                    {% if group.job.location %}
+                                        · {{ group.job.location }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <div class="muted small mt-2">
+                                {{ group.candidate_count }}
+                                unique candidate(s)
+                                · Latest activity:
+                                {{ group.latest_activity.strftime("%d %b %Y, %H:%M") }}
+                            </div>
+                        </div>
+
+                        <span class="badge text-bg-light border px-3 py-2">
+                            <i class="bi bi-trophy me-1"></i>
+                            Ranked by match score
+                        </span>
+
+                    </div>
+                </div>
+
+                <!-- Best candidate summary -->
+                {% if group.matches %}
+
+                    {% set best = group.matches[0] %}
+
+                    <div class="p-3 p-md-4">
+                        <div class="top-candidate">
+
+                            <div class="d-flex flex-wrap
+                                        justify-content-between
+                                        align-items-start gap-3">
+
+                                <div>
+                                    <div class="text-success fw-bold small mb-2">
+                                        <i class="bi bi-trophy-fill me-1"></i>
+                                        TOP-RANKED CANDIDATE
+                                    </div>
+
+                                    {% if best.resume %}
+                                        <h3 class="h6 fw-bold mb-1"
+                                            style="overflow-wrap: anywhere;">
+                                            {{ best.resume.original_filename }}
+                                        </h3>
+                                        <div class="muted small">
+                                            Resume #{{ best.resume_id }}
+                                        </div>
+                                    {% else %}
+                                        <h3 class="h6 fw-bold mb-1">
+                                            Resume #{{ best.resume_id }}
+                                        </h3>
+                                        <div class="muted small">
+                                            Original resume unavailable
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="text-md-end">
+                                    <div class="muted small">
+                                        Hybrid match score
+                                    </div>
+                                    <div class="score fs-3">
+                                        {{ "%.2f"|format(best.hybrid_score) }}%
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-sm-6">
+                                    <div class="muted small">Skill match</div>
+                                    <div class="fw-bold">
+                                        {{ "%.2f"|format(best.match_score) }}%
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="muted small">Semantic score</div>
+                                    <div class="fw-bold">
+                                        {{ "%.2f"|format(best.semantic_score) }}%
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if best.resume %}
+                                <div class="mt-3">
+                                    <a href="/resumes/{{ best.resume.id }}/view"
+                                       class="btn btn-sm btn-outline-success"
+                                       target="_blank"
+                                       rel="noopener">
+                                        <i class="bi bi-eye me-1"></i>
+                                        Review Top Candidate Resume
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                {% endif %}
+
+                <!-- Ranked candidate table -->
+                <div class="px-3 px-md-4 pb-4">
+
+                    <h3 class="h6 fw-bold mb-3">
+                        <i class="bi bi-list-ol me-1"></i>
+                        Candidate Rankings
+                    </h3>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover history-table mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Candidate Resume</th>
+                                    <th>Hybrid</th>
+                                    <th>Skill Match</th>
+                                    <th>Semantic</th>
+                                    <th>Latest Result</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for match in group.matches %}
+
+                                    <tr>
+                                        <td>
+                                            <span class="rank-number">
+                                                {{ loop.index }}
+                                            </span>
+
+                                            {% if loop.first %}
+                                                <div class="text-success small fw-bold mt-1">
+                                                    Best
+                                                </div>
+                                            {% endif %}
+                                        </td>
+
+                                        <td style="min-width: 190px;">
+                                            {% if match.resume %}
+                                                <div class="fw-semibold"
+                                                     style="overflow-wrap: anywhere;">
+                                                    {{ match.resume.original_filename }}
+                                                </div>
+                                                <small class="muted">
+                                                    Resume #{{ match.resume_id }}
+                                                </small>
+                                            {% else %}
+                                                <span class="muted">
+                                                    Resume #{{ match.resume_id }}
+                                                    unavailable
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <span class="score">
+                                                {{ "%.2f"|format(match.hybrid_score) }}%
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            {{ "%.2f"|format(match.match_score) }}%
+                                        </td>
+
+                                        <td>
+                                            {{ "%.2f"|format(match.semantic_score) }}%
+                                        </td>
+
+                                        <td style="min-width: 125px;">
+                                            <div class="fw-semibold">
+                                                {{ match.created_at.strftime("%d %b %Y") }}
+                                            </div>
+                                            <small class="muted">
+                                                {{ match.created_at.strftime("%H:%M") }}
+                                            </small>
+                                        </td>
+
+                                        <td style="min-width: 105px;">
+                                            {% if match.resume %}
+                                                <a href="/resumes/{{ match.resume.id }}/view"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   target="_blank"
+                                                   rel="noopener">
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    Resume
+                                                </a>
+                                            {% else %}
+                                                <span class="muted small">
+                                                    Unavailable
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+
+                                    <!-- Matching explanation -->
+                                    <tr>
+                                        <td colspan="7" class="pt-0">
+                                            <details>
+                                                <summary
+                                                    class="small fw-semibold text-primary"
+                                                    style="cursor: pointer;">
+                                                    <i class="bi bi-list-check me-1"></i>
+                                                    View matched and missing skills
+                                                </summary>
+
+                                                <div class="details-panel mt-3">
+                                                    <div class="row g-3">
+
+                                                        <div class="col-md-6">
+                                                            <div class="fw-bold mb-2">
+                                                                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                                                Matched Skills
+                                                            </div>
+
+                                                            {% if match.matched_skills %}
+                                                                {% for skill in match.matched_skills %}
+                                                                    <span class="skill-badge matched">
+                                                                        {{ skill }}
+                                                                    </span>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <span class="muted small">
+                                                                    No matched skills recorded.
+                                                                </span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="fw-bold mb-2">
+                                                                <i class="bi bi-exclamation-circle-fill text-warning me-1"></i>
+                                                                Missing Skills
+                                                            </div>
+
+                                                            {% if match.missing_skills %}
+                                                                {% for skill in match.missing_skills %}
+                                                                    <span class="skill-badge missing">
+                                                                        {{ skill }}
+                                                                    </span>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <span class="muted small">
+                                                                    No missing skills recorded.
+                                                                </span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                    </div>
+
+                                                    <hr>
+
+                                                    <div class="muted small">
+                                                        Latest saved result for resume
+                                                        #{{ match.resume_id }} and this job.
+                                                        Scores describe alignment with the
+                                                        job requirements. Review the original
+                                                        resume before making hiring decisions.
+                                                    </div>
+                                                </div>
+                                            </details>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="history-card p-4">
+            <div class="empty-state">
+                <i class="bi bi-clock-history display-5 text-secondary"></i>
+
+                <h3 class="h5 fw-bold mt-3">
+                    No match history yet
+                </h3>
+
+                <p class="muted mb-4">
+                    Once you screen candidates, their saved results
+                    will appear here as job-wise leaderboards.
+                </p>
+
+                <a href="/matches/ui" class="btn btn-primary">
+                    <i class="bi bi-stars me-2"></i>
+                    Start Your First Match
+                </a>
+            </div>
+        </div>
+
+    {% endif %}
+
+    <!-- Page actions -->
+    <div class="d-flex flex-wrap gap-2 mt-4 mb-3">
+        <a href="/dashboard" class="btn btn-outline-secondary">
+            <i class="bi bi-house me-1"></i>
+            Dashboard
+        </a>
+
+        <a href="/matches/ui" class="btn btn-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>
+            Run New Match
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

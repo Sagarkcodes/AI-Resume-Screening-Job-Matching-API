@@ -1,0 +1,411 @@
+
+{% extends "base.html" %}
+
+{% block title %}Recruiter Dashboard | AI Resume Matcher{% endblock %}
+
+{% block content %}
+
+<style>
+    .dashboard-page {
+        color: #1e293b;
+    }
+
+    .dashboard-page .welcome-panel {
+        background: linear-gradient(125deg, #172b4d, #28568b);
+        color: white;
+        border-radius: 16px;
+        padding: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-page .welcome-panel p {
+        color: #dbeafe;
+    }
+
+    .dashboard-page .welcome-icon {
+        font-size: 5rem;
+        color: rgba(255, 255, 255, 0.15);
+    }
+
+    .dashboard-page .section-heading {
+        color: #172b4d;
+        font-weight: 750;
+        letter-spacing: -0.4px;
+    }
+
+    .dashboard-page .action-card {
+        background: #fff;
+        border: 1px solid #e8edf4;
+        border-radius: 14px;
+        height: 100%;
+        transition: transform 0.18s ease,
+                    box-shadow 0.18s ease,
+                    border-color 0.18s ease;
+    }
+
+    .dashboard-page .action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        border-color: #cbdcf5;
+    }
+
+    .dashboard-page .action-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .dashboard-page .icon-blue {
+        color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .dashboard-page .icon-green {
+        color: #15803d;
+        background: #dcfce7;
+    }
+
+    .dashboard-page .icon-purple {
+        color: #7c3aed;
+        background: #f3e8ff;
+    }
+
+    .dashboard-page .icon-orange {
+        color: #c2410c;
+        background: #ffedd5;
+    }
+
+    .dashboard-page .card-title {
+        color: #172b4d;
+        font-weight: 700;
+    }
+
+    .dashboard-page .card-description {
+        color: #64748b;
+        line-height: 1.7;
+        min-height: 48px;
+    }
+
+    .dashboard-page .action-link {
+        font-weight: 650;
+        text-decoration: none;
+    }
+
+    .dashboard-page .workflow-panel {
+        background: #fff;
+        border: 1px solid #e8edf4;
+        border-radius: 14px;
+    }
+
+    .dashboard-page .workflow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .dashboard-page .step-number {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 750;
+    }
+
+    .dashboard-page .muted-text {
+        color: #64748b;
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-page .welcome-panel {
+            padding: 24px;
+        }
+
+        .dashboard-page .welcome-icon {
+            display: none;
+        }
+    }
+</style>
+
+<div class="container dashboard-page py-2">
+
+    <!-- Welcome banner -->
+    <section class="welcome-panel mb-5">
+        <div class="row align-items-center g-4">
+
+            <div class="col-md-9">
+                <div class="small fw-semibold text-uppercase mb-2"
+                     style="letter-spacing: 1.5px; color: #bfdbfe;">
+                    Recruiter Workspace
+                </div>
+
+                <h1 class="h2 fw-bold mb-3">
+                    Welcome back!
+                </h1>
+
+                <p class="mb-2">
+                    You're signed in as
+                    <strong>{{ user.email }}</strong>.
+                </p>
+
+                <p class="mb-4">
+                    Manage job descriptions, organize candidate resumes,
+                    and discover the strongest matches for each role.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/matches/ui"
+                       class="btn btn-light text-primary fw-semibold">
+                        <i class="bi bi-stars me-2"></i>
+                        Match Candidates
+                    </a>
+
+                    <a href="/jobs/create"
+                       class="btn btn-outline-light">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Create Job
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-3 text-center">
+                <i class="bi bi-person-workspace welcome-icon"
+                   aria-hidden="true"></i>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main navigation -->
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-end gap-2 mb-3">
+
+        <div>
+            <h2 class="h4 section-heading mb-1">Your Workspace</h2>
+            <p class="muted-text mb-0">
+                Choose what you'd like to work on.
+            </p>
+        </div>
+
+        <span class="small muted-text">
+            <i class="bi bi-shield-check me-1"></i>
+            Recruiter account
+        </span>
+
+    </div>
+
+    <div class="row g-4 mb-5">
+
+        <!-- Manage Jobs -->
+        <div class="col-md-6 col-xl-3">
+            <div class="action-card p-4">
+
+                <div class="action-icon icon-blue mb-4">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+
+                <h3 class="h5 card-title mb-2">
+                    Manage Jobs
+                </h3>
+
+                <p class="card-description mb-4">
+                    Create job descriptions, define required skills,
+                    and maintain your open role information.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="/jobs" class="btn btn-primary">
+                        View Jobs
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+
+                    <a href="/jobs/create"
+                       class="action-link text-primary align-self-center">
+                        Create New
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Manage Resumes -->
+        <div class="col-md-6 col-xl-3">
+            <div class="action-card p-4">
+
+                <div class="action-icon icon-green mb-4">
+                    <i class="bi bi-file-earmark-person"></i>
+                </div>
+
+                <h3 class="h5 card-title mb-2">
+                    Manage Resumes
+                </h3>
+
+                <p class="card-description mb-4">
+                    Upload candidate PDF resumes, review documents,
+                    and manage your candidate resume collection.
+                </p>
+
+                <a href="/resumes/manage"
+                   class="btn btn-primary">
+                    View Resumes
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- Match Candidates -->
+        <div class="col-md-6 col-xl-3">
+            <div class="action-card p-4">
+
+                <div class="action-icon icon-purple mb-4">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+
+                <h3 class="h5 card-title mb-2">
+                    Match Candidates
+                </h3>
+
+                <p class="card-description mb-4">
+                    Compare resumes against a job, rank candidates,
+                    and inspect matching scores and skills.
+                </p>
+
+                <a href="/matches/ui"
+                   class="btn btn-primary">
+                    Start Matching
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- Match History -->
+        <div class="col-md-6 col-xl-3">
+            <div class="action-card p-4">
+
+                <div class="action-icon icon-orange mb-4">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+
+                <h3 class="h5 card-title mb-2">
+                    Match History
+                </h3>
+
+                <p class="card-description mb-4">
+                    Review previously saved candidate matches,
+                    compare scores, and revisit matching details.
+                </p>
+
+                <a href="/matches/history"
+                   class="btn btn-primary">
+                    View History
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Workflow guide -->
+    <section class="workflow-panel p-4 p-lg-5 mb-4">
+
+        <div class="mb-4">
+            <h2 class="h4 section-heading mb-2">
+                Your Screening Workflow
+            </h2>
+
+            <p class="muted-text mb-0">
+                Follow these steps to screen candidates for a role.
+            </p>
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-md-4">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+
+                    <div>
+                        <h3 class="h6 fw-bold mb-2">
+                            Create a Job
+                        </h3>
+
+                        <p class="small muted-text mb-0">
+                            Add the job description and required skills
+                            that candidates should match.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+
+                    <div>
+                        <h3 class="h6 fw-bold mb-2">
+                            Upload Resumes
+                        </h3>
+
+                        <p class="small muted-text mb-0">
+                            Upload one or more candidate PDF resumes
+                            to your recruiter workspace.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+
+                    <div>
+                        <h3 class="h6 fw-bold mb-2">
+                            Review Matches
+                        </h3>
+
+                        <p class="small muted-text mb-0">
+                            Run matching, compare candidate rankings,
+                            and review matched or missing skills.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Footer actions -->
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-center gap-3 py-3">
+
+        <p class="small muted-text mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Matching scores support screening; review resumes before
+            making hiring decisions.
+        </p>
+
+        <form action="/logout" method="post">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Log Out
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

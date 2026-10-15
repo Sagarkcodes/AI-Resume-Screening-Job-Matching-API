@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Create Job | AI Resume Matcher{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <!-- Page heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Create New Job</h2>
+
+            <p class="text-secondary mb-0">
+                Enter the details of the job you want to fill.
+            </p>
+        </div>
+
+        <a href="/jobs" class="btn btn-outline-secondary">
+            Back to Jobs
+        </a>
+    </div>
+
+    <!-- Job creation form -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form action="/jobs/create" method="post">
+
+                <!-- Job title -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">
+                        Job Title
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="title"
+                        name="title"
+                        minlength="2"
+                        maxlength="200"
+                        placeholder="e.g. Python Developer"
+                        required
+                    >
+                </div>
+
+                <!-- Company -->
+                <div class="mb-3">
+                    <label for="company" class="form-label">
+                        Company
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="company"
+                        name="company"
+                        minlength="2"
+                        maxlength="200"
+                        placeholder="Enter company name"
+                        required
+                    >
+                </div>
+
+                <!-- Location -->
+                <div class="mb-3">
+                    <label for="location" class="form-label">
+                        Location
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="location"
+                        name="location"
+                        minlength="2"
+                        maxlength="200"
+                        placeholder="e.g. Pune, India or Remote"
+                        required
+                    >
+                </div>
+
+                <!-- Employment type -->
+                <div class="mb-3">
+                    <label for="employment_type" class="form-label">
+                        Employment Type
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="employment_type"
+                        name="employment_type"
+                        required
+                    >
+                        <option value="" selected disabled>
+                            Select employment type
+                        </option>
+
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Temporary">Temporary</option>
+                    </select>
+                </div>
+
+                <!-- Experience -->
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label for="experience_min" class="form-label">
+                            Minimum Experience (Years)
+                        </label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="experience_min"
+                            name="experience_min"
+                            min="0"
+                            placeholder="e.g. 0"
+                        >
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="experience_max" class="form-label">
+                            Maximum Experience (Years)
+                        </label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="experience_max"
+                            name="experience_max"
+                            min="0"
+                            placeholder="e.g. 3"
+                        >
+                    </div>
+
+                </div>
+
+                <!-- Required skills -->
+                <div class="mb-3">
+                    <label for="required_skills" class="form-label">
+                        Required Skills
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="required_skills"
+                        name="required_skills"
+                        placeholder="Python, FastAPI, SQL, PostgreSQL"
+                        required
+                    >
+
+                    <div class="form-text">
+                        Separate skills with commas.
+                    </div>
+                </div>
+
+                <!-- Job description -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">
+                        Job Description
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="description"
+                        name="description"
+                        rows="6"
+                        minlength="20"
+                        placeholder="Describe the responsibilities, qualifications, and expectations for this job."
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- Submit -->
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Create Job
+                </button>
+
+                <a href="/jobs" class="btn btn-outline-secondary ms-2">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
